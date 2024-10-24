@@ -9,6 +9,7 @@ import UIKit
 
 class ViewController: UIViewController {
     
+    
     var persons = ["Klaus", "Maren", "Niklas", "Max", "Hermann", "Klaudia"]
 
     //MARK: -Outlet
@@ -41,11 +42,32 @@ class ViewController: UIViewController {
     
     //MARK: - Add new persons
     @IBAction func addButtonTapped(_ sender: UIBarButtonItem) {
+        
+        var textField = UITextField()
+        
         let alert = UIAlertController(
             title: "Neue Person Hinzufügen",
             message: "Bitte gebe den Namen ein",
             preferredStyle: UIAlertController.Style.alert
         )
+        let action = UIAlertAction(title: "Person hinzugügen", style: .default) {(action) in
+            //print("Neue Person hinzufügen")
+            if textField.text == "" || textField.text == nil {
+                return
+            } else {
+                self.persons.insert(textField.text!, at: 0)
+                
+                let indexPath = IndexPath(row: 0, section: 0)
+                self.tableView.insertRows(at: [indexPath], with: .left)
+            }
+        }
+        alert.addAction(action)
+        alert.addTextField {
+            (alertTextField) in
+            alertTextField.placeholder = "Name"
+            print("Hallo2")
+            textField = alertTextField
+        }
         present(
             alert,
             animated: true,
@@ -81,7 +103,7 @@ extension ViewController: UITableViewDelegate {
         persons.insert(selectedPerson, at: destinationIndexPath.row)
     }
     
-    //MARK: - Delete Rowsf
+    //MARK: - Delete Rows
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
