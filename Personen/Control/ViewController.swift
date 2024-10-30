@@ -10,13 +10,30 @@ import UIKit
 class ViewController: UIViewController {
     
     
-    var persons = ["Klaus", "Maren", "Niklas", "Max", "Hermann", "Klaudia"]
+    var persons = Person.loadPersons()
 
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Personen.plist")
+    
     //MARK: -Outlet
     @IBOutlet weak var tableView: UITableView!
     
+    
+    //MARK: -UserDefaults
+    
+    //let defaults = UserDefaults.standard
+    //let personsArrayKey = "PersonsArray"
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        print(dataFilePath)
+        
+        //if let _persons = defaults.array(forKey: personsArrayKey) as? [Person]{
+        //    persons = _persons
+        //}
+        
+        loadPersons()
+        
         tableView.delegate = self
         tableView.dataSource = self
         
@@ -55,25 +72,55 @@ class ViewController: UIViewController {
             if textField.text == "" || textField.text == nil {
                 return
             } else {
-                self.persons.insert(textField.text!, at: 0)
+                self.persons.insert(Person(name: textField.text!), at: 0)
+                
+                //self.defaults.set(self.persons, forKey: self.personsArrayKey)
+                
+                self.savePersons()
                 
                 let indexPath = IndexPath(row: 0, section: 0)
                 self.tableView.insertRows(at: [indexPath], with: .left)
             }
         }
-        alert.addAction(action)
         alert.addTextField {
             (alertTextField) in
             alertTextField.placeholder = "Name"
             print("Hallo2")
             textField = alertTextField
         }
+        alert.addAction(action)
         present(
             alert,
             animated: true,
             completion: nil
         )
     }
+    
+    //MARK: - Save Persons
+    func savePersons(){
+        let encoder = PropertyListEncoder()
+        
+        do{
+            let data = try encoder.encode(persons)
+            try data.write(to: dataFilePath!)
+        } catch{
+            print("Error \(error)")
+        }
+    }
+    
+    //MARK: - Load Persons
+    func loadPersons(){
+        if let data = try? Data(contentsOf: dataFilePath!){
+            let decoder = PropertyListDecoder()
+            
+            do{
+                persons = try decoder.decode([Person].self, from: data)
+            } catch{
+                print("Error \(error)")
+            }
+        }
+    }
+    
 }
 
 extension ViewController: UITableViewDataSource {
@@ -85,7 +132,9 @@ extension ViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
         
-        cell.textLabel?.text = persons[indexPath.row]
+        let currentPerson = persons[indexPath.row]
+        
+        cell.textLabel?.text = currentPerson.name
         
         return cell
     }
@@ -101,6 +150,7 @@ extension ViewController: UITableViewDelegate {
         let selectedPerson = persons[sourceIndexPath.row]
         persons.remove(at: sourceIndexPath.row)
         persons.insert(selectedPerson, at: destinationIndexPath.row)
+        savePersons()
     }
     
     //MARK: - Delete Rows
@@ -109,6 +159,7 @@ extension ViewController: UITableViewDelegate {
         if editingStyle == .delete {
             persons.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .automatic)
+            savePersons()
         }
     }
 }
